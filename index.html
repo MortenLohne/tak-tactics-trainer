@@ -153,6 +153,7 @@ ${moveNumber}. ${puzzle.defenderStartMove}
                             action: 'NOTIFY_ERROR',
                             value: `Incorrect move: ${event.data.value}`
                         }, '*');
+                        currentPuzzlePly += 1;
                     }
                 }
                 messagesReceived += 1;
