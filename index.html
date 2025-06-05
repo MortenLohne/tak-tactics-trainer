@@ -129,10 +129,17 @@ ${moveNumber}. ${puzzle.defenderStartMove}
                 }
                 if (event.data.action === "NEXT") {
                     currentPuzzlePly += 1;
+                    // Skip past the defender's move
+                    if (currentPuzzlePly % 2 === 1) {
+                        ninja.contentWindow.postMessage({
+                            action: 'INSERT_PLY',
+                            value: puzzle.solution[currentPuzzlePly]
+                        }, '*');
+                    }
                 }
                 if (event.data.action === "INSERT_PLY") {
                     if (event.data.value === puzzle.solution[currentPuzzlePly]) {
-                        if (currentPuzzlePly % 2 == 0) {
+                        if (currentPuzzlePly % 2 === 0) {
                             // Even ply are the player's moves
                             ninja.contentWindow.postMessage({
                                 action: 'NOTIFY_SUCCESS',
