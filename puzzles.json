@@ -1,0 +1,19 @@
+[
+    {
+        "size": 6,
+        "komi": 0,
+        "rootTPS": "2,1S,2,1,2,1/2,2,2,2,2,21/1,1,112C,1112S,2,21/x2,12121C,x,1,1/x6/x6 2 23",
+        "defenderStartMove": "d3",
+        "solution": [
+            "5c3>5",
+            "e4-",
+            "5d3>5",
+            "Se2",
+            "6e3<222"
+        ],
+        "targetTimeSeconds": 120,
+        "playerWhite": "M_Ainsel",
+        "playerBlack": "Guest26",
+        "playtakGameId": "190871"
+    }
+]

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Embed Test</title>
+
+    <style media="screen">
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: sans-serif;
+        }
+
+        .row {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+        }
+
+        body>.row {
+            flex-grow: 1;
+            min-width: 200px;
+            flex-wrap: wrap;
+            margin-top: 1em;
+        }
+
+        body>.row>* {
+            flex-grow: 1;
+            min-width: 200px;
+        }
+
+        .row input,
+        .row textarea {
+            width: 100% !important;
+            margin-bottom: 1em;
+        }
+
+        #sendMessage,
+        #clearOutput {
+            position: sticky;
+            top: 1em;
+        }
+
+        #output {
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+
+<body>
+    <iframe id="ninja"
+        src="http://localhost:8080/&showPlayButton=false&showPTN=true&showText=true&showBoardPrefsBtn=true" width="100%"
+        height="600px" style="width: 100%; height: 600px; max-height: 100vh" frameborder="0" allowfullscreen></iframe>
+
+    <div class="row">
+        <fieldset>
+            <legend>Send Message</legend>
+            <form id="sendMessage" method="post">
+                <input name="action" placeholder="Action" />
+                <textarea name="value" placeholder="Value"></textarea>
+                <div class="row">
+                    <input type="reset" value="Clear" />
+                    <input type="submit" value="Send" />
+                </div>
+            </form>
+        </fieldset>
+
+        <fieldset>
+            <legend>Received Messages</legend>
+            <input id="clearOutput" type="button" value="Clear" onclick="output.value = ''" />
+            <output id="output"></output>
+        </fieldset>
+    </div>
+
+    <script type="text/javascript">
+        const form = document.getElementById("sendMessage");
+        let messagesReceived = 0;
+        let puzzle;
+        let currentPuzzlePly = 0;
+
+        const initPuzzles = () => {
+            fetch('puzzles.json')
+                .then(response => response.json())
+                .then(puzzles => {
+                    console.log(`${puzzles.length} puzzles loaded`);
+                    puzzle = puzzles[0];
+                    const tpsWords = puzzle.rootTPS.split(' ');
+                    const moveNumber = tpsWords[tpsWords.length - 1];
+
+                    const ninja = document.getElementById("ninja");
+
+                    const ptn = `[Size "${puzzle.size}"]
+[Komi "${puzzle.komi}"]
+[TPS "${puzzle.rootTPS}"]
+[Player1 "${puzzle.playerWhite}"]
+[Player2 "${puzzle.playerBlack}"]
+${moveNumber}. ${puzzle.defenderStartMove}
+`;
+                    console.log(`Setting PTN: ${ptn}`);
+
+                    ninja.contentWindow.postMessage({
+                        action: 'SET_CURRENT_PTN',
+                        value: ptn
+                    }, '*');
+                    ninja.contentWindow.postMessage({
+                        action: 'LAST',
+                    }, '*');
+                })
+                .catch(error => {
+                    console.error('Error fetching puzzles:', error);
+                });
+        };
+        window.addEventListener(
+            "message",
+            (event) => {
+                document.getElementById("output").value +=
+                    "" + messagesReceived + " messages received,\n" + JSON.stringify(event.data, null, 2) + "\n";
+
+                // Wait for the first message from ptn.ninja before initializing the puzzle start position
+                if (messagesReceived === 0) {
+                    initPuzzles();
+                }
+                if (event.data.action === "INSERT_PLY") {
+                    if (event.data.value === puzzle.solution[currentPuzzlePly]) {
+                        if (currentPuzzlePly % 2 == 0) {
+                            // Even ply are the player's moves
+                            ninja.contentWindow.postMessage({
+                                action: 'NOTIFY_SUCCESS',
+                                value: `Correct move: ${event.data.value}`
+                            }, '*');
+                            currentPuzzlePly += 1;
+                            ninja.contentWindow.postMessage({
+                                action: 'INSERT_PLY',
+                                value: puzzle.solution[currentPuzzlePly]
+                            }, '*');
+                        } else {
+                            // Odd ply are the opponent's moves
+                            currentPuzzlePly += 1;
+                        }
+                    } else {
+                        ninja.contentWindow.postMessage({
+                            action: 'NOTIFY_ERROR',
+                            value: `Incorrect move: ${event.data.value}`
+                        }, '*');
+                    }
+                }
+                messagesReceived += 1;
+            },
+            false
+        );
+
+        form.addEventListener(
+            "submit",
+            (event) => {
+                event.preventDefault();
+                const ninja = document.getElementById("ninja");
+                const data = new FormData(event.target);
+                const action = data.get("action");
+                const valueString = data.get("value");
+                let value;
+                try {
+                    value = JSON.parse(valueString);
+                } catch (error) {
+                    value = valueString;
+                }
+                try {
+                    ninja.contentWindow.postMessage({ action, value }, "*");
+                } catch (error) {
+                    console.error(error);
+                }
+                return false;
+            },
+            true
+        );
+
+    </script>
+</body>
+
+</html>
