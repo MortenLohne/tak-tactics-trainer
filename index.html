@@ -117,6 +117,9 @@ ${moveNumber}. ${puzzle.defenderStartMove}
         window.addEventListener(
             "message",
             (event) => {
+                if (event.source !== ninja.contentWindow) {
+                    return
+                }
                 document.getElementById("output").value +=
                     "" + messagesReceived + " messages received,\n" + JSON.stringify(event.data, null, 2) + "\n";
 
