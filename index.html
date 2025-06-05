@@ -4,7 +4,8 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Embed Test</title>
+    <title>Tak tactics trainer</title>
+    <h1 align="center">Find the best move!</h1>
 
     <style media="screen">
         body {
@@ -55,11 +56,24 @@
     <iframe id="ninja" src="https://ptn.ninja/&showPlayButton=false&showPTN=false&showText=false&showBoardPrefsBtn=true"
         width="100%" height="600px" style="width: 100%; height: 600px; max-height: 100vh" frameborder="0"
         allowfullscreen></iframe>
-
-    <div class="row">
+    <div id="puzzleSolved" style="display: none;">
+        <h2>Puzzle Solved!</h2>
+        <p>Congratulations! You have successfully solved the puzzle.</p>
+        <button id="nextPuzzleSuccess" onclick="document.getElementById('puzzleSolved').style.display='none';">Next
+            puzzle</button>
+    </div>
+    <div id="puzzleFailed" style="display: none;">
+        <h2>Puzzle Failed</h2>
+        <p>Unfortunately, you did not solve the puzzle correctly.</p>
+        <button id="nextPuzzleFailed" onclick="document.getElementById('puzzleFailed').style.display='none';">Next
+            puzzle</button>
+        <button id="retryPuzzle"
+            onclick="document.getElementById('puzzleFailed').style.display='none';switchPuzzle()">Retry Puzzle</button>
+    </div>
+    <div class="row" style="display: none;">
         <fieldset>
             <legend>Send Message</legend>
-            <form id="sendMessage" method="post">
+            <form id=" sendMessage" method="post">
                 <input name="action" placeholder="Action" />
                 <textarea name="value" placeholder="Value"></textarea>
                 <div class="row">
@@ -79,36 +93,61 @@
     <script type="text/javascript">
         const form = document.getElementById("sendMessage");
         let messagesReceived = 0;
-        let puzzle;
+        let currentPuzzleIndex = 0;
+        let allPuzzles = [];
+        let currentPuzzle;
         let currentPuzzlePly = 0;
+
+        const nextPuzzle = () => {
+            currentPuzzleIndex += 1;
+            if (currentPuzzleIndex >= allPuzzles.length) {
+                currentPuzzleIndex = 0; // Loop back to the first puzzle
+            }
+            currentPuzzle = allPuzzles[currentPuzzleIndex];
+            switchPuzzle();
+        }
+        const nextPuzzleSuccessButton = document.getElementById("nextPuzzleSuccess");
+        nextPuzzleSuccessButton.addEventListener("click", () => {
+            nextPuzzle();
+        });
+        const nextPuzzleFailedButton = document.getElementById("nextPuzzleFailed");
+        nextPuzzleFailedButton.addEventListener("click", () => {
+            nextPuzzle();
+        });
+
+        const switchPuzzle = () => {
+            currentPuzzlePly = 0;
+            const tpsWords = currentPuzzle.rootTPS.split(' ');
+            const moveNumber = tpsWords[tpsWords.length - 1];
+
+            const ninja = document.getElementById("ninja");
+
+            const ptn = `[Size "${currentPuzzle.size}"]
+            [Komi "${currentPuzzle.komi}"]
+            [TPS "${currentPuzzle.rootTPS}"]
+            [Player1 "${currentPuzzle.playerWhite}"]
+            [Player2 "${currentPuzzle.playerBlack}"]
+${moveNumber}. ${currentPuzzle.defenderStartMove}
+            `;
+            console.log(`Setting PTN: ${ptn} `);
+
+            ninja.contentWindow.postMessage({
+                action: 'SET_CURRENT_PTN',
+                value: ptn
+            }, '*');
+            ninja.contentWindow.postMessage({
+                action: 'LAST',
+            }, '*');
+        }
 
         const initPuzzles = () => {
             fetch('puzzles.json')
                 .then(response => response.json())
                 .then(puzzles => {
                     console.log(`${puzzles.length} puzzles loaded`);
-                    puzzle = puzzles[0];
-                    const tpsWords = puzzle.rootTPS.split(' ');
-                    const moveNumber = tpsWords[tpsWords.length - 1];
-
-                    const ninja = document.getElementById("ninja");
-
-                    const ptn = `[Size "${puzzle.size}"]
-[Komi "${puzzle.komi}"]
-[TPS "${puzzle.rootTPS}"]
-[Player1 "${puzzle.playerWhite}"]
-[Player2 "${puzzle.playerBlack}"]
-${moveNumber}. ${puzzle.defenderStartMove}
-`;
-                    console.log(`Setting PTN: ${ptn}`);
-
-                    ninja.contentWindow.postMessage({
-                        action: 'SET_CURRENT_PTN',
-                        value: ptn
-                    }, '*');
-                    ninja.contentWindow.postMessage({
-                        action: 'LAST',
-                    }, '*');
+                    allPuzzles = puzzles;
+                    currentPuzzle = puzzles[0];
+                    switchPuzzle();
                 })
                 .catch(error => {
                     console.error('Error fetching puzzles:', error);
@@ -136,28 +175,37 @@ ${moveNumber}. ${puzzle.defenderStartMove}
                     if (currentPuzzlePly % 2 === 1) {
                         ninja.contentWindow.postMessage({
                             action: 'INSERT_PLY',
-                            value: puzzle.solution[currentPuzzlePly]
+                            value: currentPuzzle.solution[currentPuzzlePly]
                         }, '*');
                     }
                 }
                 if (event.data.action === "INSERT_PLY") {
-                    if (event.data.value === puzzle.solution[currentPuzzlePly]) {
+                    if (event.data.value === currentPuzzle.solution[currentPuzzlePly]) {
+                        if (currentPuzzlePly === currentPuzzle.solution.length - 1) {
+                            // Puzzle solved
+                            document.getElementById("puzzleSolved").style.display = "block";
+                            ninja.contentWindow.postMessage({
+                                action: 'NOTIFY_SUCCESS',
+                                value: `Puzzle solved!`
+                            }, '*');
+                        }
                         if (currentPuzzlePly % 2 === 0) {
                             // Even ply are the player's moves
                             ninja.contentWindow.postMessage({
                                 action: 'NOTIFY_SUCCESS',
-                                value: `Correct move: ${event.data.value}`
+                                value: `Correct move: ${event.data.value} `
                             }, '*');
                             currentPuzzlePly += 1;
                             ninja.contentWindow.postMessage({
                                 action: 'INSERT_PLY',
-                                value: puzzle.solution[currentPuzzlePly]
+                                value: currentPuzzle.solution[currentPuzzlePly]
                             }, '*');
                         } else {
                             // Odd ply are the opponent's moves
                             currentPuzzlePly += 1;
                         }
                     } else {
+                        document.getElementById("puzzleFailed").style.display = "block";
                         ninja.contentWindow.postMessage({
                             action: 'NOTIFY_ERROR',
                             value: `Incorrect move: ${event.data.value}`
