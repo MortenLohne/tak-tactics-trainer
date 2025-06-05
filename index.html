@@ -53,8 +53,9 @@
 
 <body>
     <iframe id="ninja"
-        src="http://localhost:8080/&showPlayButton=false&showPTN=true&showText=true&showBoardPrefsBtn=true" width="100%"
-        height="600px" style="width: 100%; height: 600px; max-height: 100vh" frameborder="0" allowfullscreen></iframe>
+        src="http://localhost:8080/&showPlayButton=false&showPTN=false&showText=false&showBoardPrefsBtn=true"
+        width="100%" height="600px" style="width: 100%; height: 600px; max-height: 100vh" frameborder="0"
+        allowfullscreen></iframe>
 
     <div class="row">
         <fieldset>
@@ -123,6 +124,12 @@ ${moveNumber}. ${puzzle.defenderStartMove}
                 // Wait for the first message from ptn.ninja before initializing the puzzle start position
                 if (messagesReceived === 0) {
                     initPuzzles();
+                }
+                if (event.data.action === "PREV") {
+                    currentPuzzlePly -= 1;
+                }
+                if (event.data.action === "NEXT") {
+                    currentPuzzlePly += 1;
                 }
                 if (event.data.action === "INSERT_PLY") {
                     if (event.data.value === puzzle.solution[currentPuzzlePly]) {
