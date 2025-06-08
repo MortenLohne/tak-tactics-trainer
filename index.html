@@ -53,7 +53,8 @@
 </head>
 
 <body>
-    <iframe id="ninja" src="https://ptn.ninja/&showPlayButton=false&showPTN=false&showText=false&showBoardPrefsBtn=true"
+    <iframe id="ninja"
+        src="https://ptn.ninja/&showPlayButton=false&disablePTN=true&disableText=true&showBoardPrefsBtn=true"
         width="100%" height="600px" style="width: 100%; height: 600px; max-height: 100vh" frameborder="0"
         allowfullscreen></iframe>
     <div id="puzzleSolved" style="display: none;">
@@ -186,20 +187,23 @@ ${moveNumber}. ${currentPuzzle.defenderStartMove}
                             document.getElementById("puzzleSolved").style.display = "block";
                             ninja.contentWindow.postMessage({
                                 action: 'NOTIFY_SUCCESS',
-                                value: `Puzzle solved!`
+                                value: { message: `Puzzle solved!`, timeout: 5000 }
                             }, '*');
                         }
                         if (currentPuzzlePly % 2 === 0) {
                             // Even ply are the player's moves
                             ninja.contentWindow.postMessage({
                                 action: 'NOTIFY_SUCCESS',
-                                value: `Correct move: ${event.data.value} `
+                                value: { message: `Correct move: ${event.data.value} `, timeout: 2000 }
                             }, '*');
                             currentPuzzlePly += 1;
-                            ninja.contentWindow.postMessage({
-                                action: 'INSERT_PLY',
-                                value: currentPuzzle.solution[currentPuzzlePly]
-                            }, '*');
+                            // Wait before inserting the next ply
+                            setTimeout(() => {
+                                ninja.contentWindow.postMessage({
+                                    action: 'INSERT_PLY',
+                                    value: currentPuzzle.solution[currentPuzzlePly]
+                                }, '*');
+                            }, 200);
                         } else {
                             // Odd ply are the opponent's moves
                             currentPuzzlePly += 1;
@@ -208,7 +212,7 @@ ${moveNumber}. ${currentPuzzle.defenderStartMove}
                         document.getElementById("puzzleFailed").style.display = "block";
                         ninja.contentWindow.postMessage({
                             action: 'NOTIFY_ERROR',
-                            value: `Incorrect move: ${event.data.value}`
+                            value: { message: `Incorrect move: ${event.data.value}`, timeout: 2000 }
                         }, '*');
                         currentPuzzlePly += 1;
                     }
