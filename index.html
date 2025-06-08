@@ -181,7 +181,7 @@ ${moveNumber}. ${currentPuzzle.defenderStartMove}
                     }
                 }
                 if (event.data.action === "INSERT_PLY") {
-                    if (event.data.value === currentPuzzle.solution[currentPuzzlePly]) {
+                    if (event.data.value.replaceAll("*", "") === currentPuzzle.solution[currentPuzzlePly]) {
                         if (currentPuzzlePly === currentPuzzle.solution.length - 1) {
                             // Puzzle solved
                             document.getElementById("puzzleSolved").style.display = "block";
