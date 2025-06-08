@@ -60,16 +60,15 @@
     <div id="puzzleSolved" style="display: none;">
         <h2>Puzzle Solved!</h2>
         <p>Congratulations! You have successfully solved the puzzle.</p>
-        <button id="nextPuzzleSuccess" onclick="document.getElementById('puzzleSolved').style.display='none';">Next
+        <button id="nextPuzzleSuccess">Next
             puzzle</button>
     </div>
     <div id="puzzleFailed" style="display: none;">
         <h2>Puzzle Failed</h2>
         <p>Unfortunately, you did not solve the puzzle correctly.</p>
-        <button id="nextPuzzleFailed" onclick="document.getElementById('puzzleFailed').style.display='none';">Next
+        <button id="nextPuzzleFailed">Next
             puzzle</button>
-        <button id="retryPuzzle"
-            onclick="document.getElementById('puzzleFailed').style.display='none';switchPuzzle()">Retry Puzzle</button>
+        <button id="retryPuzzle" onclick="switchPuzzle()">Retry Puzzle</button>
     </div>
     <div class="row" style="display: none;">
         <fieldset>
@@ -118,6 +117,9 @@
 
         const switchPuzzle = () => {
             currentPuzzlePly = 0;
+            document.getElementById('puzzleFailed').style.display = 'none';
+            document.getElementById('puzzleSolved').style.display = 'none';
+
             const tpsWords = currentPuzzle.rootTPS.split(' ');
             const moveNumber = tpsWords[tpsWords.length - 1];
 
