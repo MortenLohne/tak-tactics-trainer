@@ -120,11 +120,18 @@
             document.getElementById('puzzleFailed').style.display = 'none';
             document.getElementById('puzzleSolved').style.display = 'none';
 
+            const ninja = document.getElementById("ninja");
+            ninja.contentWindow.postMessage({
+                action: 'SET_UI',
+                value: {
+                    disableBoard: false,
+                }
+            }, '*');
+
             const tpsWords = currentPuzzle.rootTPS.split(' ');
             const moveNumber = tpsWords[tpsWords.length - 1];
             const color = tpsWords[tpsWords.length - 2] === 1 ? 'black' : 'white';
 
-            const ninja = document.getElementById("ninja");
 
             const ptn = `[Size "${currentPuzzle.size}"]
             [Komi "${currentPuzzle.komi}"]
@@ -201,7 +208,7 @@ ${moveNumber}. ${currentPuzzle.defenderStartMove}
                 if (event.data.action === "NEXT") {
                     currentPuzzlePly += 1;
                     // Skip past the defender's move
-                    if (currentPuzzlePly % 2 === 1 && currentPuzzlePly < currentPuzzle.solution.length) {
+                    if (currentPuzzlePly % 2 === 1 && currentPuzzlePly < currentPuzzle.solution.length && document.getElementById('puzzleFailed').style.display === 'none') {
                         ninja.contentWindow.postMessage({
                             action: 'INSERT_PLY',
                             value: currentPuzzle.solution[currentPuzzlePly]
@@ -216,6 +223,12 @@ ${moveNumber}. ${currentPuzzle.defenderStartMove}
                             ninja.contentWindow.postMessage({
                                 action: 'NOTIFY_SUCCESS',
                                 value: { message: `Puzzle solved!`, timeout: 5000 }
+                            }, '*');
+                            ninja.contentWindow.postMessage({
+                                action: 'SET_UI',
+                                value: {
+                                    disableBoard: true,
+                                }
                             }, '*');
                         }
                         else if (currentPuzzlePly % 2 === 0) {
@@ -251,6 +264,12 @@ ${moveNumber}. ${currentPuzzle.defenderStartMove}
                         ninja.contentWindow.postMessage({
                             action: 'NOTIFY_ERROR',
                             value: { message: `Incorrect move: ${event.data.value}`, timeout: 2000 }
+                        }, '*');
+                        ninja.contentWindow.postMessage({
+                            action: 'SET_UI',
+                            value: {
+                                disableBoard: true,
+                            }
                         }, '*');
                     }
                     currentPuzzlePly += 1;
