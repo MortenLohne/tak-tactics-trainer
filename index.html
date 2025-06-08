@@ -130,7 +130,6 @@
             [Player2 "${currentPuzzle.playerBlack}"]
 ${moveNumber}. ${currentPuzzle.defenderStartMove}
             `;
-            console.log(`Setting PTN: ${ptn} `);
 
             ninja.contentWindow.postMessage({
                 action: 'SET_CURRENT_PTN',
