@@ -92,6 +92,7 @@
 
     <script type="text/javascript">
         const form = document.getElementById("sendMessage");
+        let ptnNinjaHasLoaded = false;
         let messagesReceived = 0;
         let currentPuzzleIndex = 0;
         let allPuzzles = [];
@@ -161,12 +162,19 @@ ${moveNumber}. ${currentPuzzle.defenderStartMove}
                 if (event.source !== ninja.contentWindow) {
                     return
                 }
+                messagesReceived += 1;
                 document.getElementById("output").value +=
                     "" + messagesReceived + " messages received,\n" + JSON.stringify(event.data, null, 2) + "\n";
 
-                // Wait for the first message from ptn.ninja before initializing the puzzle start position
-                if (messagesReceived === 0) {
-                    initPuzzles();
+                // Consider the PTN ninja embed loaded after first GAME_STATE message
+                // Only initialize puzzles after this point
+                if (!ptnNinjaHasLoaded) {
+                    if (event.data.action === "GAME_STATE") {
+                        ptnNinjaHasLoaded = true;
+                        initPuzzles();
+                    } else {
+                        return; // Ignore other messages until ptn.ninja is fully loaded
+                    }
                 }
                 if (event.data.action === "PREV") {
                     currentPuzzlePly -= 1;
@@ -231,7 +239,6 @@ ${moveNumber}. ${currentPuzzle.defenderStartMove}
                     }
                     currentPuzzlePly += 1;
                 }
-                messagesReceived += 1;
             },
             false
         );
