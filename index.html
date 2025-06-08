@@ -5,7 +5,6 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Tak tactics trainer</title>
-    <h1 align="center">Find the best move!</h1>
 
     <style media="screen">
         body {
@@ -123,6 +122,7 @@
 
             const tpsWords = currentPuzzle.rootTPS.split(' ');
             const moveNumber = tpsWords[tpsWords.length - 1];
+            const color = tpsWords[tpsWords.length - 2] === 1 ? 'black' : 'white';
 
             const ninja = document.getElementById("ninja");
 
@@ -137,6 +137,10 @@ ${moveNumber}. ${currentPuzzle.defenderStartMove}
             ninja.contentWindow.postMessage({
                 action: 'SET_CURRENT_PTN',
                 value: ptn
+            }, '*');
+            ninja.contentWindow.postMessage({
+                action: 'SET_NAME',
+                value: `Find the best move for ${color}! Puzzle #${currentPuzzleIndex + 1}`,
             }, '*');
             ninja.contentWindow.postMessage({
                 action: 'LAST',
