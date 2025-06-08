@@ -224,15 +224,27 @@ ${moveNumber}. ${currentPuzzle.defenderStartMove}
                                 action: 'NOTIFY_SUCCESS',
                                 value: { message: `Correct move: ${event.data.value} `, timeout: 2000 }
                             }, '*');
-                            // Wait before inserting the next ply
+                            // Wait before inserting the next ply, disable the board in the meantime
+                            ninja.contentWindow.postMessage({
+                                action: 'SET_UI',
+                                value: {
+                                    disableBoard: true,
+                                }
+                            }, '*');
                             setTimeout(() => {
                                 ninja.contentWindow.postMessage({
                                     action: 'INSERT_PLY',
                                     value: currentPuzzle.solution[currentPuzzlePly]
                                 }, '*');
-                            }, 200);
+                            }, 300);
                         } else {
                             // Odd ply are the opponent's moves
+                            ninja.contentWindow.postMessage({
+                                action: 'SET_UI',
+                                value: {
+                                    disableBoard: false,
+                                }
+                            }, '*');
                         }
                     } else {
                         document.getElementById("puzzleFailed").style.display = "block";
