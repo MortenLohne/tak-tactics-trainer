@@ -97,6 +97,7 @@
         let allPuzzles = [];
         let currentPuzzle;
         let currentPuzzlePly = 0;
+        let lastMoveWasFinalMove = false;
 
         const nextPuzzle = () => {
             currentPuzzleIndex += 1;
@@ -130,8 +131,8 @@
 
             const tpsWords = currentPuzzle.rootTPS.split(' ');
             const moveNumber = tpsWords[tpsWords.length - 1];
-            const color = tpsWords[tpsWords.length - 2] === "2" ? 'white' : 'black';
-
+            const colorId = tpsWords[tpsWords.length - 2] === "2" ? 1 : 2;
+            const color = colorId === 1 ? 'white' : 'black';
 
             const ptn = `[Size "${currentPuzzle.size}"]
             [Komi "${currentPuzzle.komi}"]
@@ -167,6 +168,39 @@ ${moveNumber}. ${currentPuzzle.defenderStartMove}
                     console.error('Error fetching puzzles:', error);
                 });
         };
+
+        const markSolved = () => {
+            document.getElementById("puzzleSolved").style.display = "block";
+
+            const ninja = document.getElementById("ninja");
+            ninja.contentWindow.postMessage({
+                action: 'NOTIFY_SUCCESS',
+                value: { message: `Puzzle solved!`, timeout: 5000 }
+            }, '*');
+            ninja.contentWindow.postMessage({
+                action: 'SET_UI',
+                value: {
+                    disableBoard: true,
+                }
+            }, '*');
+        }
+
+        const markFailed = (finalMove) => {
+            document.getElementById("puzzleFailed").style.display = "block";
+
+            const ninja = document.getElementById("ninja");
+            ninja.contentWindow.postMessage({
+                action: 'NOTIFY_ERROR',
+                value: { message: `Incorrect move: ${finalMove}`, timeout: 2000 }
+            }, '*');
+            ninja.contentWindow.postMessage({
+                action: 'SET_UI',
+                value: {
+                    disableBoard: true,
+                }
+            }, '*');
+        }
+
         window.addEventListener(
             "message",
             (event) => {
@@ -215,21 +249,31 @@ ${moveNumber}. ${currentPuzzle.defenderStartMove}
                         }, '*');
                     }
                 }
+                if (event.data.action === "GAME_STATE" && lastMoveWasFinalMove) {
+                    // This only happens after the player's last move, when the solution move was a wildcard
+                    // Check that the last move was actually winning
+                    const tpsWords = currentPuzzle.rootTPS.split(' ');
+                    const colorId = tpsWords[tpsWords.length - 2] === "2" ? 1 : 2;
+                    if (event.data.value.result?.winner === colorId) {
+                        markSolved();
+                    } else {
+                        markFailed(event.data.value.ply);
+                    }
+                    lastMoveWasFinalMove = false;
+                }
                 if (event.data.action === "INSERT_PLY") {
-                    if (event.data.value.replaceAll("*", "") === currentPuzzle.solution[currentPuzzlePly]) {
+                    if (lastMoveWasFinalMove) {
+                        console.log("Received unexpected INSERT_PLY after final move");
+                    }
+                    if (currentPuzzle.solution[currentPuzzlePly] === "*") {
+                        // Player's final move, where the solution is any move that wins immediately
+                        // We don't know if it was actually winning until the next GAME_STATE message
+                        lastMoveWasFinalMove = true;
+                    }
+                    else if (event.data.value.replaceAll("*", "") === currentPuzzle.solution[currentPuzzlePly]) {
                         if (currentPuzzlePly === currentPuzzle.solution.length - 1) {
                             // Puzzle solved
-                            document.getElementById("puzzleSolved").style.display = "block";
-                            ninja.contentWindow.postMessage({
-                                action: 'NOTIFY_SUCCESS',
-                                value: { message: `Puzzle solved!`, timeout: 5000 }
-                            }, '*');
-                            ninja.contentWindow.postMessage({
-                                action: 'SET_UI',
-                                value: {
-                                    disableBoard: true,
-                                }
-                            }, '*');
+                            markSolved();
                         }
                         else if (currentPuzzlePly % 2 === 0) {
                             // Even ply are the player's moves
@@ -260,17 +304,7 @@ ${moveNumber}. ${currentPuzzle.defenderStartMove}
                             }, '*');
                         }
                     } else {
-                        document.getElementById("puzzleFailed").style.display = "block";
-                        ninja.contentWindow.postMessage({
-                            action: 'NOTIFY_ERROR',
-                            value: { message: `Incorrect move: ${event.data.value}`, timeout: 2000 }
-                        }, '*');
-                        ninja.contentWindow.postMessage({
-                            action: 'SET_UI',
-                            value: {
-                                disableBoard: true,
-                            }
-                        }, '*');
+                        markFailed(event.data.value);
                     }
                     currentPuzzlePly += 1;
                 }

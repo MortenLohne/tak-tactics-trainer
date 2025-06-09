@@ -1,6 +1,21 @@
 [
     {
         "size": 6,
+        "komi": "2",
+        "rootTPS": "2,x,x,2,1,1/2,x,2,2,1,2S/2222221S,x,x,121C,1,x/x,112,11112C,2,21211112S,2/2,22221S,2,1,x,1/2,x,1,1,1,1 2 47",
+        "defenderStartMove": "5e3<",
+        "solution": [
+            "d4-",
+            "3e3+12",
+            "*"
+        ],
+        "targetTimeSeconds": 120,
+        "playerWhite": "x57696c6c",
+        "playerBlack": "EVRNjayhawker",
+        "playtakGameId": 491458
+    },
+    {
+        "size": 6,
         "komi": "0",
         "rootTPS": "212,x,1,x,x,x/1S,1,x,1,x,x/x,122212C,11112111,x,x,x/12,2,x,121,x,x/2,2,x,2S,x,x/221C,21,122,x,x,x 2 32",
         "defenderStartMove": "c2",
