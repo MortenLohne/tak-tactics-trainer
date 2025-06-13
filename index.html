@@ -93,22 +93,14 @@
         const form = document.getElementById("sendMessage");
         let ptnNinjaHasLoaded = false;
         let messagesReceived = 0;
-        let currentPuzzleIndex = 0;
-        let allPuzzles = [];
         let currentPuzzle;
         let currentPuzzlePly = 0;
         let lastMoveWasFinalMove = false;
 
         const nextPuzzle = async () => {
-            currentPuzzleIndex += 1;
-            if (currentPuzzleIndex >= allPuzzles.length) {
-                currentPuzzleIndex = 0; // Loop back to the first puzzle
-            }
-
-            const puzzleResponse = await fetch(`http://localhost:3000/puzzles?username=Mort4`);
-            console.log("Puzzle response status:", puzzleResponse.status);
-            console.log(puzzleResponse.ok);
+            const puzzleResponse = await fetch(`http://localhost:3000/puzzles?username=Mort5`);
             if (!puzzleResponse.ok) {
+                console.log("All puzzles already solved!");
                 throw new Error(`Response status: ${response.status}`);
             }
             const puzzle = await puzzleResponse.json();
@@ -158,7 +150,7 @@ ${moveNumber}. ${currentPuzzle.defenderStartMove}
             }, '*');
             ninja.contentWindow.postMessage({
                 action: 'SET_NAME',
-                value: `Find the best move for ${color}! Puzzle #${currentPuzzleIndex + 1}`,
+                value: `Find the best move for ${color}! Puzzle #${currentPuzzle.id}`,
             }, '*');
             ninja.contentWindow.postMessage({
                 action: 'LAST',
@@ -186,20 +178,6 @@ ${moveNumber}. ${currentPuzzle.defenderStartMove}
                     console.error('Error solving puzzle:', error);
                 });
         }
-
-        const initPuzzles = () => {
-            fetch('puzzles.json')
-                .then(response => response.json())
-                .then(puzzles => {
-                    console.log(`${puzzles.length} puzzles loaded`);
-                    allPuzzles = puzzles;
-                    currentPuzzle = puzzles[0];
-                    switchPuzzle();
-                })
-                .catch(error => {
-                    console.error('Error fetching puzzles:', error);
-                });
-        };
 
         const markSolved = () => {
             document.getElementById("puzzleSolved").style.display = "block";
@@ -252,7 +230,7 @@ ${moveNumber}. ${currentPuzzle.defenderStartMove}
                 if (!ptnNinjaHasLoaded) {
                     if (event.data.action === "GAME_STATE") {
                         ptnNinjaHasLoaded = true;
-                        initPuzzles();
+                        await nextPuzzle();
                     } else {
                         return; // Ignore other messages until ptn.ninja is fully loaded
                     }
