@@ -11,6 +11,11 @@
             margin: 0;
             padding: 30px;
             font-family: sans-serif;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
         }
 
         #overlay {
@@ -32,6 +37,45 @@
             border-radius: 8px;
             text-align: center;
         }
+
+        .timers {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            gap: 50px;
+            text-align: center;
+        }
+
+        .how-to-play {
+            text-align: center;
+            justify-content: space-around;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            padding-top: 2px;
+            padding-bottom: 10px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .timer-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .label {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            color: #555;
+        }
+
+        .timer {
+            font-size: 4em;
+            font-weight: bold;
+            color: #222;
+        }
     </style>
 </head>
 
@@ -47,18 +91,38 @@
         src="https://ptn.ninja/&showPlayButton=false&disablePTN=true&disableText=true&showBoardPrefsBtn=true"
         width="100%" height="600px" style="width: 100%; height: 600px; max-height: 100vh" frameborder="0"
         allowfullscreen></iframe>
-    <div id="puzzleSolved" style="display: none;">
+    <div id="puzzleSolved" class="how-to-play" style="display: none;">
         <h2>Puzzle Solved!</h2>
         <p>Congratulations! You have successfully solved the puzzle.</p>
         <button id="nextPuzzleSuccess">Next
             puzzle</button>
     </div>
-    <div id="puzzleFailed" style="display: none;">
+    <div id="puzzleFailed" class="how-to-play" style="display: none;">
         <h2>Puzzle Failed</h2>
         <p>Unfortunately, you did not solve the puzzle correctly.</p>
         <button id="nextPuzzleFailed">Next
             puzzle</button>
         <button id="retryPuzzle" onclick="switchPuzzle()">Retry Puzzle</button>
+    </div>
+    <div class="timers">
+        <div class="timer-container">
+            <div class="label">Elapsed time</div>
+            <div id="elapsed-timer" class="timer">0:00</div>
+        </div>
+        <div class="timer-container">
+            <div class="label">Target time</div>
+            <div id="avg-timer" class="timer">1:30</div>
+        </div>
+    </div>
+    <div id="howToPlay" class="how-to-play">
+        <!-- Centered -->
+        <h2>How to Play</h2>
+        <p>Find the best move in the position. When you make a move, it's immediately submitted as the solution, so
+            click
+            carefully!</p>
+
+        <p>The solution may be an immediate win by road, or a move that leads to a forced win over the next few
+            moves.</p>
     </div>
 
     <script type="text/javascript">
@@ -75,7 +139,6 @@
                 }
             } else {
                 console.log("No username entered");
-                alert("Please enter a username.");
             }
         }
 
@@ -91,6 +154,16 @@
         let currentPuzzle;
         let currentPuzzlePly = 0;
         let lastMoveWasFinalMove = false;
+        let secondsElapsed = 0;
+        let intervalTimerId;
+
+        function updateElapsedTime() {
+            const elapsedTimer = document.getElementById("elapsed-timer");
+            const minutes = Math.floor(secondsElapsed / 60);
+            const seconds = secondsElapsed % 60;
+            elapsedTimer.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            secondsElapsed++;
+        }
 
         const nextPuzzle = async () => {
             const puzzleResponse = await fetch(`http://79.161.44.204:3000/puzzles?username=${username}`);
@@ -115,8 +188,22 @@
 
         const switchPuzzle = () => {
             currentPuzzlePly = 0;
+            secondsElapsed = 0;
             document.getElementById('puzzleFailed').style.display = 'none';
             document.getElementById('puzzleSolved').style.display = 'none';
+
+            if (intervalTimerId) {
+                clearInterval(intervalTimerId);
+                intervalTimerId = null;
+            }
+
+            const averageTimeElement = document.getElementById("avg-timer");
+            const minutes = Math.floor(currentPuzzle.targetTimeSeconds / 60);
+            const seconds = currentPuzzle.targetTimeSeconds % 60;
+            averageTimeElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+            updateElapsedTime();
+            intervalTimerId = setInterval(updateElapsedTime, 1000);
 
             const ninja = document.getElementById("ninja");
             ninja.contentWindow.postMessage({
@@ -158,7 +245,7 @@ ${moveNumber}. ${currentPuzzle.defenderStartMove}
                 username,
                 solved: wasSolved,
                 solution: [],
-                solveTimeSeconds: 0,
+                solveTimeSeconds: secondsElapsed,
             };
             console.log("Posting solution:", JSON.stringify(payload));
 
@@ -189,6 +276,11 @@ ${moveNumber}. ${currentPuzzle.defenderStartMove}
                 }
             }, '*');
 
+            if (intervalTimerId) {
+                clearInterval(intervalTimerId);
+                intervalTimerId = null;
+            }
+
             postSolution(true);
         }
 
@@ -206,6 +298,11 @@ ${moveNumber}. ${currentPuzzle.defenderStartMove}
                     disableBoard: true,
                 }
             }, '*');
+
+            if (intervalTimerId) {
+                clearInterval(intervalTimerId);
+                intervalTimerId = null;
+            }
 
             postSolution(false);
         }
