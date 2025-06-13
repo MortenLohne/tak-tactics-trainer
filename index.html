@@ -93,7 +93,7 @@
         let lastMoveWasFinalMove = false;
 
         const nextPuzzle = async () => {
-            const puzzleResponse = await fetch(`http://localhost:3000/puzzles?username=${username}`);
+            const puzzleResponse = await fetch(`http://79.161.44.204:3000/puzzles?username=${username}`);
             if (!puzzleResponse.ok) {
                 console.log("All puzzles already solved!");
                 throw new Error(`Response status: ${response.status}`);
@@ -162,7 +162,7 @@ ${moveNumber}. ${currentPuzzle.defenderStartMove}
             };
             console.log("Posting solution:", JSON.stringify(payload));
 
-            fetch(`http://localhost:3000/puzzles/${currentPuzzle.id}`, {
+            fetch(`http://79.161.44.204:3000/puzzles/${currentPuzzle.id}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
