@@ -99,21 +99,31 @@
         let currentPuzzlePly = 0;
         let lastMoveWasFinalMove = false;
 
-        const nextPuzzle = () => {
+        const nextPuzzle = async () => {
             currentPuzzleIndex += 1;
             if (currentPuzzleIndex >= allPuzzles.length) {
                 currentPuzzleIndex = 0; // Loop back to the first puzzle
             }
-            currentPuzzle = allPuzzles[currentPuzzleIndex];
+
+            const puzzleResponse = await fetch(`http://localhost:3000/puzzles?username=Mort4`);
+            console.log("Puzzle response status:", puzzleResponse.status);
+            console.log(puzzleResponse.ok);
+            if (!puzzleResponse.ok) {
+                throw new Error(`Response status: ${response.status}`);
+            }
+            const puzzle = await puzzleResponse.json();
+            console.log("Puzzle response:", JSON.stringify(puzzle));
+            currentPuzzle = puzzle;
+
             switchPuzzle();
         }
         const nextPuzzleSuccessButton = document.getElementById("nextPuzzleSuccess");
-        nextPuzzleSuccessButton.addEventListener("click", () => {
-            nextPuzzle();
+        nextPuzzleSuccessButton.addEventListener("click", async () => {
+            await nextPuzzle();
         });
         const nextPuzzleFailedButton = document.getElementById("nextPuzzleFailed");
-        nextPuzzleFailedButton.addEventListener("click", () => {
-            nextPuzzle();
+        nextPuzzleFailedButton.addEventListener("click", async () => {
+            await nextPuzzle();
         });
 
         const switchPuzzle = () => {
@@ -155,6 +165,28 @@ ${moveNumber}. ${currentPuzzle.defenderStartMove}
             }, '*');
         }
 
+        const postSolution = (wasSolved) => {
+            let payload = {
+                id: currentPuzzle.id,
+                username: "Mort4",
+                solved: wasSolved,
+                solution: [],
+                solveTimeSeconds: 0,
+            };
+            console.log("Posting solution:", JSON.stringify(payload));
+
+            fetch(`http://localhost:3000/puzzles/${currentPuzzle.id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            })
+                .catch(error => {
+                    console.error('Error solving puzzle:', error);
+                });
+        }
+
         const initPuzzles = () => {
             fetch('puzzles.json')
                 .then(response => response.json())
@@ -183,6 +215,8 @@ ${moveNumber}. ${currentPuzzle.defenderStartMove}
                     disableBoard: true,
                 }
             }, '*');
+
+            postSolution(true);
         }
 
         const markFailed = (finalMove) => {
@@ -199,11 +233,13 @@ ${moveNumber}. ${currentPuzzle.defenderStartMove}
                     disableBoard: true,
                 }
             }, '*');
+
+            postSolution(false);
         }
 
         window.addEventListener(
             "message",
-            (event) => {
+            async (event) => {
                 if (event.source !== ninja.contentWindow) {
                     return
                 }
@@ -255,7 +291,7 @@ ${moveNumber}. ${currentPuzzle.defenderStartMove}
                     const tpsWords = currentPuzzle.rootTPS.split(' ');
                     const colorId = tpsWords[tpsWords.length - 2] === "2" ? 1 : 2;
                     if (event.data.value.result?.winner === colorId) {
-                        markSolved();
+                        await markSolved();
                     } else {
                         markFailed(event.data.value.ply);
                     }
@@ -273,7 +309,7 @@ ${moveNumber}. ${currentPuzzle.defenderStartMove}
                     else if (event.data.value.replaceAll("*", "") === currentPuzzle.solution[currentPuzzlePly]) {
                         if (currentPuzzlePly === currentPuzzle.solution.length - 1) {
                             // Puzzle solved
-                            markSolved();
+                            await markSolved();
                         }
                         else if (currentPuzzlePly % 2 === 0) {
                             // Even ply are the player's moves
