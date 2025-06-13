@@ -168,7 +168,11 @@
         }
 
         const nextPuzzle = async () => {
-            const puzzleResponse = await fetch(`http://79.161.44.204:3000/puzzles?username=${username}`);
+            const puzzleResponse = await fetch(`https://3319-2a01-799-14a8-c800-a44b-3557-494f-30d9.ngrok-free.app/puzzles?username=${username}`, {
+                headers: {
+                    'ngrok-skip-browser-warning': true,
+                },
+            });
             if (!puzzleResponse.ok) {
                 console.log("All puzzles already solved!");
                 throw new Error(`Response status: ${response.status}`);
@@ -251,7 +255,7 @@ ${moveNumber}. ${currentPuzzle.defenderStartMove}
             };
             console.log("Posting solution:", JSON.stringify(payload));
 
-            fetch(`http://79.161.44.204:3000/puzzles/${currentPuzzle.id}`, {
+            fetch(`https://3319-2a01-799-14a8-c800-a44b-3557-494f-30d9.ngrok-free.app/puzzles/${currentPuzzle.id}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
