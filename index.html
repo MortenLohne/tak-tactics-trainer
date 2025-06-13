@@ -104,7 +104,12 @@
             puzzle</button>
         <button id="retryPuzzle" onclick="switchPuzzle()">Retry Puzzle</button>
     </div>
-    <div class="timers">
+    <div id="allPuzzledSolved" class="how-to-play" style="display: none;">
+        <h2>All puzzles solved!</h2>
+        <p>Congratulations! You have played all puzzles currently available.</p>
+        <p>Check back later for more puzzles!</p>
+    </div>
+    <div id="timers" class="timers">
         <div class="timer-container">
             <div class="label">Elapsed Time</div>
             <div id="elapsed-timer" class="timer">0:00</div>
@@ -115,7 +120,6 @@
         </div>
     </div>
     <div id="howToPlay" class="how-to-play">
-        <!-- Centered -->
         <h2>How to Play</h2>
         <p>Find the best move in the position. When you make a move on the board, it's immediately submitted as the
             solution, so
@@ -174,8 +178,15 @@
                 },
             });
             if (!puzzleResponse.ok) {
-                console.log("All puzzles already solved!");
-                throw new Error(`Response status: ${response.status}`);
+                if (puzzleResponse.status === 404) {
+                    document.getElementById('allPuzzledSolved').style.display = 'block';
+                    document.getElementById('timers').style.display = 'none';
+                    document.getElementById('howToPlay').style.display = 'none';
+                    document.getElementById('puzzleFailed').style.display = 'none';
+                    document.getElementById('puzzleSolved').style.display = 'none';
+                    return;
+                }
+                throw new Error(`Response status: ${puzzleResponse.status}`);
             }
             const puzzle = await puzzleResponse.json();
             console.log("Puzzle response:", JSON.stringify(puzzle));
