@@ -13,42 +13,6 @@
             font-family: sans-serif;
         }
 
-        .row {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: stretch;
-        }
-
-        body>.row {
-            flex-grow: 1;
-            min-width: 200px;
-            flex-wrap: wrap;
-            margin-top: 1em;
-        }
-
-        body>.row>* {
-            flex-grow: 1;
-            min-width: 200px;
-        }
-
-        .row input,
-        .row textarea {
-            width: 100% !important;
-            margin-bottom: 1em;
-        }
-
-        #sendMessage,
-        #clearOutput {
-            position: sticky;
-            top: 1em;
-        }
-
-        #output {
-            font-family: monospace;
-            white-space: pre-wrap;
-        }
-
         #overlay {
             position: fixed;
             top: 0;
@@ -96,25 +60,6 @@
             puzzle</button>
         <button id="retryPuzzle" onclick="switchPuzzle()">Retry Puzzle</button>
     </div>
-    <div class="row" style="display: none;">
-        <fieldset>
-            <legend>Send Message</legend>
-            <form id=" sendMessage" method="post">
-                <input name="action" placeholder="Action" />
-                <textarea name="value" placeholder="Value"></textarea>
-                <div class="row">
-                    <input type="reset" value="Clear" />
-                    <input type="submit" value="Send" />
-                </div>
-            </form>
-        </fieldset>
-
-        <fieldset>
-            <legend>Received Messages</legend>
-            <input id="clearOutput" type="button" value="Clear" onclick="output.value = ''" />
-            <output id="output"></output>
-        </fieldset>
-    </div>
 
     <script type="text/javascript">
         let username;
@@ -141,7 +86,6 @@
             }
         });
 
-        const form = document.getElementById("sendMessage");
         let ptnNinjaHasLoaded = false;
         let messagesReceived = 0;
         let currentPuzzle;
@@ -273,8 +217,6 @@ ${moveNumber}. ${currentPuzzle.defenderStartMove}
                     return
                 }
                 messagesReceived += 1;
-                document.getElementById("output").value +=
-                    "" + messagesReceived + " messages received,\n" + JSON.stringify(event.data, null, 2) + "\n";
 
                 // Consider the PTN ninja embed loaded after first GAME_STATE message
                 // Only initialize puzzles after this point
@@ -378,30 +320,6 @@ ${moveNumber}. ${currentPuzzle.defenderStartMove}
                 }
             },
             false
-        );
-
-        form.addEventListener(
-            "submit",
-            (event) => {
-                event.preventDefault();
-                const ninja = document.getElementById("ninja");
-                const data = new FormData(event.target);
-                const action = data.get("action");
-                const valueString = data.get("value");
-                let value;
-                try {
-                    value = JSON.parse(valueString);
-                } catch (error) {
-                    value = valueString;
-                }
-                try {
-                    ninja.contentWindow.postMessage({ action, value }, "*");
-                } catch (error) {
-                    console.error(error);
-                }
-                return false;
-            },
-            true
         );
 
     </script>
