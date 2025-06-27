@@ -172,7 +172,7 @@
         }
 
         const nextPuzzle = async () => {
-            const puzzleResponse = await fetch(`https://3319-2a01-799-14a8-c800-a44b-3557-494f-30d9.ngrok-free.app/puzzles?username=${username}`, {
+            const puzzleResponse = await fetch(`https://dodo-healthy-eft.ngrok-free.app/puzzles?username=${username}`, {
                 headers: {
                     'ngrok-skip-browser-warning': true,
                 },
@@ -266,7 +266,7 @@ ${moveNumber}. ${currentPuzzle.defenderStartMove}
             };
             console.log("Posting solution:", JSON.stringify(payload));
 
-            fetch(`https://3319-2a01-799-14a8-c800-a44b-3557-494f-30d9.ngrok-free.app/puzzles/${currentPuzzle.id}`, {
+            fetch(`https://dodo-healthy-eft.ngrok-free.app/puzzles/${currentPuzzle.id}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
